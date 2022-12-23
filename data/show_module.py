@@ -23,4 +23,6 @@ class appointment_model():
 
         # import the data
         df = pd.read_csv(data_file, delimiter=',')
-        # store the data in a ne
+        # store the data in a new variable for later use
+        self.df_with_predict = df.copy()
+        
