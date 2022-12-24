@@ -62,3 +62,16 @@ class appointment_model():
         # to remove the irrelevant columns
         df = df.drop(['Patient_ID', 'Appointment_ID', 'Appointment_day', 'Scheduled_day'], axis = 1, inplace = True)
         
+    # a function which outputs the probability of a data point to be 1
+    def predicted_probability(self):
+        if (self.data is not None):
+            pred_outputs = self.reg.predict(self.data)
+            return pred_outputs
+
+    # predict the outputs and the probabilities and add columns with these values at the end of new data
+    def predicted_outputs(self):
+        if (self.data is not None):
+            self.preprocessed_data['Probability'] = self.reg.predict_proba(self.data)[:,1]
+            self.preprocessed_data['Prediction'] = self.reg.predict(self.data)
+            return self.preprocessed_data
+
