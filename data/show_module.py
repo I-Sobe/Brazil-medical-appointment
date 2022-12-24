@@ -22,7 +22,12 @@ class appointment_model():
     def load_and_clean_data(self, data_file):
 
         # import the data
-        df = pd.read_csv(data_file, delimiter=',')
+        labels =['Patient_ID', 'Appointment_ID', 'Gender', 'Scheduled_day', 'Appointment_day', 'Age', 'Neighbourhood', 'Scholarship', 'Hipertension', 'Diabetes', 'Alcoholism', 'Handcap', 'SMS_received', 'Show']
+        df = pd.read_csv(data_file, delimiter=',', header=0, names=labels)
         # store the data in a new variable for later use
         self.df_with_predict = df.copy()
-        
+        # to remove the irrelevant columns
+        df = df.drop(['Patient_ID', 'Appointment_ID'], axis = 1, inplace = True)
+        #changing Scheduled_day and Appointment_day datatype to timestamps
+        df['Scheduled_day'] = pd.to_datetime(df['Scheduled_day'])
+        df['Appointment_day'] = pd.to_datetime(df['Appointment_day'])
