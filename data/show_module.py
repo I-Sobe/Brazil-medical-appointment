@@ -27,13 +27,15 @@ class appointment_model():
     def load_and_clean_data(self, data_file):
 
         # import the data
-        labels =['Patient_ID', 'Appointment_ID', 'Gender', 'Scheduled_day', 'Appointment_day', 'Age', 'Neighbourhood', 'Scholarship', 'Hipertension', 'Diabetes', 'Alcoholism', 'Handcap', 'SMS_received', 'Show']
+        labels =['patient_ID', 'appointment_ID', 'gender', 'Scheduled_day', 'Appointment_day', 'age', 'neigbhorhood', 'scholarship', 'hypertension', 'diabetes', 'alcoholism', 'handicap', 'sms_received', 'show']
         df = pd.read_csv(data_file, delimiter=',', header=0, names=labels)
+       
         # store the data in a new variable for later use
         self.df_with_predict = df.copy()
+        
         #changing Scheduled_day and Appointment_day datatype to timestamps
-        df['Scheduled_day'] = pd.to_datetime(df['Scheduled_day'].dt.date)
-        df['Appointment_day'] = pd.to_datetime(df['Appointment_day'].dt.date)
+        df['Scheduled_day'] = pd.to_datetime(df['scheduled_day'].dt.date)
+        df['Appointment_day'] = pd.to_datetime(df['appointment_day'].dt.date)
         # Extracting the 'Year','Month' and 'day' from Date Column.
         df['scheduled_month'] = df['Scheduled_day'].dt.month_name()
         df['scheduled_day'] = df['Scheduled_day'].dt.day_name()
@@ -42,29 +44,50 @@ class appointment_model():
         df['appointment_day'] = df['Appointment_day'].dt.day_name()
 
         # converting the month and day columns to interger values as this is a ML project
-        df['scheduled_month'] = df['scheduled_month'].replace(['January', 'February', 'March', 'April', 'May', 'June', 
-        'July', 'August', 'September', 'October', 'November', 'December'], ['1', '2', '3', '4', '5', '6', '7', '8', '9', 
-        '10', '11', '12'])
-        df['scheduled_day'] = df['scheduled_day'].replace(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday','Friday', 
-        'Saturday'], ['1', '2', '3', '4', '5', '6', '7'])
+        df.scheduled_month.replace(to_replace=['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 
+        'September', 'October', 'November', 'December'], value=[1,2,3,4,5,6,7,8,9,10,11,12], inplace=True)
+        df.scheduled_day.replace(to_replace=['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday','Friday', 'Saturday'],
+        value=['1', '2', '3', '4', '5', '6', '7'], inplace=True)
+        df.appointment_month.replace(to_replace=['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 
+        'September', 'October', 'November', 'December'], value=[1,2,3,4,5,6,7,8,9,10,11,12], inplace=True)
+        df.appointment_day.replace(to_replace=['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday','Friday', 'Saturday'],
+        value=['1', '2', '3', '4', '5', '6', '7'], inplace=True)
 
-        df['appointment_month'] = df['appointment_month'].replace(['January', 'February', 'March', 'April', 'May', 'June', 
-        'July', 'August', 'September', 'October', 'November', 'December'], ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
-        '11', '12'])
-        df['appointment_day'] = df['appointment_day'].replace(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday','Friday', 
-        'Saturday'], ['1', '2', '3', '4', '5', '6', '7'])
-        # to remove the irrelevant columns
-        df = df.drop(['Appointment_day', 'Scheduled_day'], axis = 1, inplace = True)
-
-        # changing strings value ('yes','no') in 'No_show to int values ('0','1')
-        # with this, every '1' value in the 'show' dataset indicates that the patient showed up
-        # and '0' means the patient didnt.
-        df['Show'].mask(df['Show'] == 'No', 1, inplace=True)
-        df['Show'].mask(df['Show'] == 'Yes', 0, inplace=True)
+        # changing strings value ('Yes','No) in 'No_show to int values ('0', '1')
+        df['Show'].replace(to_replace=['Yes', 'No'], value=[0,1], inplace=True)
         # changing the datatype of 'show' to reflect it's new content and ease computation
         df.Show = df.Show.astype(int)
+        # make sure the age column doesn't have a value less than 0
+        df = df[df['Age'] >=0]
+        
+        # feature engineering the neigbhorhood column
+        neigbhorhood = pd.get_dummies(df.neigbhorhood, drop_first=True)
+        # grouping the neigbhorhood data
+        neigbhorhood_1 = neigbhorhood.iloc[:, :11].max(axis=1)
+        neigbhorhood_2 = neigbhorhood.iloc[:, 11:21].max(axis=1)
+        neigbhorhood_3 = neigbhorhood.iloc[:, 21:31].max(axis=1)
+        neigbhorhood_4 = neigbhorhood.iloc[:, 31:41].max(axis=1)
+        neigbhorhood_5 = neigbhorhood.iloc[:, 41:51].max(axis=1)
+        neigbhorhood_6 = neigbhorhood.iloc[:, 51:61].max(axis=1)
+        neigbhorhood_7 = neigbhorhood.iloc[:, 61:71].max(axis=1)
+        neigbhorhood_8 = neigbhorhood.iloc[:, 71:].max(axis=1)
+        # concatenate the columns
+        df = pd.concat([df, df, neigbhorhood_1, neigbhorhood_2, neigbhorhood_3, neigbhorhood_4, neigbhorhood_5, neigbhorhood_6, neigbhorhood_7, neigbhorhood_8], axis=1)
+        
+        # let's create age groups
+        #create the bin_edges that will be used to cut the data into groups.
+        bin_edges = [-1.0, 22, 38.0, 54.0, 115.0]
+
+        #create labels for the new categories.
+        # 1 (Gen_Z+), 2 (Milennials), 3 (Gen_X), 4 (Bloomers+)
+        bin_names = ['1', '2', '3', '4']
+
+        # puting the pandas_cut function to use
+        df['age_groups'] = pd.cut(df['Age'], bin_edges, labels=bin_names)
+
         # to remove the irrelevant columns
-        df = df.drop(['Patient_ID', 'Appointment_ID', 'Appointment_day', 'Scheduled_day'], axis = 1, inplace = True)
+        df = df.drop(['Patient_ID', 'Appointment_ID', 'Appointment_day', 'Scheduled_day', 'neigbhorhood', 'age',
+        'scholarship', 'alcoholism', 'sms_received', 'neigbhorhood_1', 'neigbhorhood_3', 'neigbhorhood_4', 'neigbhorhood_6'], axis = 1, inplace = True)
         
     # a function which outputs the probability of a data point to be 1
     def predicted_probability(self):
