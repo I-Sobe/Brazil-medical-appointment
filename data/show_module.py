@@ -8,9 +8,11 @@ import warnings
 warnings.filterwarnings('ignore')
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import plot_confusion_matrix
-
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import svm
+from sklearn.svm import SVC
 # creating the special class fo the prediction
 class appointment_model():
 
