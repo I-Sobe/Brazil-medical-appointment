@@ -4,6 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pickle 
 import datetime as dt
+import warnings
+warnings.filterwarnings('ignore')
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
